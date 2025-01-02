@@ -4,8 +4,10 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   price: { type: Number, required: true },
   description: { type: String, required: true },
-  image: { type: String },
-  category: { type: String, required: true }, // Adaugă câmpul pentru categorie
+  category: { type: String, required: true },
+  image: { type: String }, // Calea fișierului încărcat
 });
 
-module.exports = productSchema; // Exportă schema direct
+const Product = mongoose.model("Product", productSchema);
+
+module.exports = Product;

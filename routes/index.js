@@ -2,45 +2,37 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const { addProduct } = require("../controllers/productController"); // Asigură-te că această importare e corectă
+const { addProduct } = require("../controllers/productController");
 
-// Configurare multer pentru a stoca fișierele încărcate
+// Configurare `multer`
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("Destination for upload:", "uploads/"); // Log destinația fișierului
-    cb(null, "uploads/");
+    const uploadPath = path.join(__dirname, "../uploads");
+    console.log("Destination for upload:", uploadPath);
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    console.log("File name before saving:", file.originalname); // Log numele fișierului
-    cb(null, file.originalname);
-  },
-  limits: {
-    fileSize: 1048576, // Limita de dimensiune a fișierului
+    console.log("File name before saving:", file.originalname);
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1048576 }, // 1MB
+});
 
-// Ruta pentru a crea un produs nou
-router.post("/", upload.single("image"), (req, res, next) => {
-  // Loguri pentru a verifica datele trimise
-  console.log("Request body:", req.body); // Log parametrii trimisi prin body (name, price, description, category)
-  console.log("File info:", req.file); // Log fișierul trimis
+// Ruta pentru crearea unui produs
+router.post("/", upload.single("image"), (req, res) => {
+  console.log("Request body:", req.body); // Log parametrii din body
+  console.log("File info:", req.file); // Log fișierul încărcat
 
-  // Verificăm dacă există un fișier încărcat
   if (!req.file) {
-    console.log("No image file uploaded"); // Log dacă nu există fișier
+    console.log("No image file uploaded");
     return res.status(400).json({ error: "No image file uploaded" });
   }
 
-  // Verificăm dimensiunea fișierului
-  if (req.file.size > 1048576) {
-    console.log("File is too large:", req.file.size); // Log dimensiune fișier
-    return res.status(400).json({ error: "File size exceeds limit" });
-  }
-
-  // Continuăm cu procesul de creare a produsului
-  addProduct(req, res);
+  addProduct(req, res); // Apel la controller
 });
 
 module.exports = router;

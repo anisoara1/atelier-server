@@ -47,13 +47,13 @@ app.use((err, req, res, next) => {
 // Conexiune la MongoDB și pornirea serverului
 const PORT = process.env.PORT || 5000;
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(`process.env.MONGO_URI`)
   .then(() => {
     console.log("Connected to MongoDB");
 
     // Ascultă pe toate interfețele de rețea
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Serverul rulează pe http://0.0.0.0:${PORT}`);
+    app.listen(PORT, () => {
+      console.log(`Serverul rulează pe ${PORT}`);
     });
   })
   .catch((err) => console.error("MongoDB connection error:", err));

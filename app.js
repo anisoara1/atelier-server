@@ -6,7 +6,14 @@ const cors = require("cors");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const { upload } = require("./routes/index");
 const productRoutes = require("./routes/index"); // Importă ruta pentru produse
+const {
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+} = require("./controllers/productController");
 
 dotenv.config(); // Încarcă variabilele din fișierul .env
 
@@ -20,8 +27,11 @@ app.use(morgan("tiny"));
 // Servește fișierele încărcate
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Rute
-app.use("/products", productRoutes);
+// Rute pentru produse
+app.get("/products", getProducts);
+app.post("/products", upload.single("image"), addProduct); // Creare produs
+app.put("/products/:id", upload.single("image"), updateProduct); // Actualizare produs
+app.delete("/products/:id", deleteProduct); // Ștergere produs
 
 // Gestionare 404
 app.use((req, res, next) => {

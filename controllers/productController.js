@@ -1,5 +1,15 @@
 const Product = require("../models/productModel"); // Importă modelul pentru produs
 
+const getProducts = async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Eroare la obținerea produselor" });
+  }
+};
+
 const addProduct = async (req, res) => {
   console.log("addProduct route accessed");
 
@@ -53,4 +63,81 @@ const addProduct = async (req, res) => {
   }
 };
 
-module.exports = { addProduct };
+const updateProduct = async (req, res) => {
+  console.log("updateProduct route accessed");
+
+  const { id } = req.params; // Obținem ID-ul produsului din parametrii URL-ului
+  const { name, price, description, category } = req.body;
+
+  if (!id) {
+    console.log("Error: Missing product ID");
+    return res.status(400).json({ error: "Missing product ID" });
+  }
+
+  // Preluăm informațiile actualizate despre imagine, dacă există
+  const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+  const updateData = {
+    ...(name && { name }),
+    ...(price && { price: parseFloat(price) }),
+    ...(description && { description }),
+    ...(category && { category }),
+    ...(image && { image }),
+  };
+
+  console.log("Data for update:", updateData);
+
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
+      new: true, // Returnează produsul actualizat
+      runValidators: true, // Rulează validările definite în model
+    });
+
+    if (!updatedProduct) {
+      console.log("Error: Product not found");
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    console.log("Product updated:", updatedProduct);
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({ error: "Eroare la actualizarea produsului" });
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  console.log("deleteProduct route accessed");
+
+  const { id } = req.params; // Obținem ID-ul produsului din parametrii URL-ului
+
+  if (!id) {
+    console.log("Error: Missing product ID");
+    return res.status(400).json({ error: "Missing product ID" });
+  }
+
+  try {
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      console.log("Error: Product not found");
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    console.log("Product deleted:", deletedProduct);
+    res.status(200).json({
+      message: "Product deleted successfully",
+      product: deletedProduct,
+    });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).json({ error: "Eroare la ștergerea produsului" });
+  }
+};
+
+module.exports = {
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+};

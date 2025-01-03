@@ -35,4 +35,4 @@ router.post("/", upload.single("image"), (req, res) => {
   addProduct(req, res); // Apel la controller
 });
 
-module.exports = router;
+module.exports = { router, upload };

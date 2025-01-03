@@ -50,8 +50,10 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+
+    // Ascultă pe toate interfețele de rețea
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Serverul rulează pe http://0.0.0.0:${PORT}`);
     });
   })
   .catch((err) => console.error("MongoDB connection error:", err));

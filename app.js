@@ -26,6 +26,9 @@ app.use(morgan("tiny"));
 
 // Servește fișierele încărcate
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.get("/", (req, res) => {
+  res.send("Bine ai venit pe serverul meu!");
+});
 
 // Rute pentru produse
 app.get("/products", getProducts);

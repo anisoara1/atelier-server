@@ -54,6 +54,8 @@ if (!mongoUri) {
   );
 }
 
+console.log("MONGO_URI:", mongoUri);
+
 // Conectarea la MongoDB fără opțiuni depășite
 mongoose
   .connect(mongoUri)

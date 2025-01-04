@@ -58,7 +58,7 @@ console.log("MONGO_URI:", mongoUri);
 
 // Conectarea la MongoDB fără opțiuni depășite
 mongoose
-  .connect(mongoUri)
+  .createConnection(mongoUri)
   .then(() => {
     console.log("Connected to MongoDB");
 

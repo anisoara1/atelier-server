@@ -46,14 +46,26 @@ app.use((err, req, res, next) => {
 
 // Conexiune la MongoDB și pornirea serverului
 const PORT = process.env.PORT || 5000;
+const mongoUri = process.env.MONGO_URI;
+
+if (!mongoUri) {
+  throw new Error(
+    "MONGO_URI is not defined. Check your environment variables."
+  );
+}
+
+// Conectarea la MongoDB fără opțiuni depășite
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(mongoUri)
   .then(() => {
     console.log("Connected to MongoDB");
 
-    // Ascultă pe toate interfețele de rețea
+    // Pornirea serverului doar după ce conexiunea la MongoDB este reușită
     app.listen(PORT, () => {
-      console.log(`Serverul rulează pe ${PORT}`);
+      console.log(`Serverul rulează pe http://localhost:${PORT}`);
     });
   })
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .catch((err) => {
+    console.error("MongoDB connection error:", err.message);
+    process.exit(1); // Închide aplicația dacă nu se poate conecta la MongoDB
+  });

@@ -55,7 +55,7 @@ const addProduct = async (req, res) => {
     const savedProduct = await newProduct.save();
     console.log("Product saved:", savedProduct); // Log după ce produsul este salvat cu succes
 
-    res.status(201).json(savedProduct); // Trimite produsul salvat ca răspuns
+    res.status(201).json(savedProduct);
   } catch (error) {
     // Log eroare în cazul unei probleme la salvare
     console.error("Error adding product:", error);

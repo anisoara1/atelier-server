@@ -1,21 +1,13 @@
 const createError = require("http-errors");
 const express = require("express");
 const path = require("path");
-const fs = require("fs").promises;
 const cors = require("cors");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const { upload } = require("./routes/index");
-const productRoutes = require("./routes/index"); // Importă ruta pentru produse
-const {
-  getProducts,
-  addProduct,
-  updateProduct,
-  deleteProduct,
-} = require("./controllers/productController");
+const productRoutes = require("./routes/index");
 
-dotenv.config(); // Încarcă variabilele din fișierul .env
+dotenv.config();
 
 const app = express();
 
@@ -25,16 +17,17 @@ app.use(cors());
 app.use(morgan("tiny"));
 
 // Servește fișierele încărcate
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.get("/", (req, res) => {
-  res.send("Bine ai venit pe serverul meu!(:-)");
-});
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    console.log(`Request for file: ${req.path}`);
+    next();
+  },
+  express.static(path.join(__dirname, "uploads"))
+);
 
-// Rute pentru produse
-app.get("/products", getProducts);
-app.post("/products", upload.single("image"), addProduct); // Creare produs
-app.put("/products/:id", upload.single("image"), updateProduct); // Actualizare produs
-app.delete("/products/:id", deleteProduct); // Ștergere produs
+// Rute principale
+app.use("/", productRoutes);
 
 // Gestionare 404
 app.use((req, res, next) => {
@@ -48,8 +41,7 @@ app.use((err, req, res, next) => {
 });
 
 // Conexiune la MongoDB și pornirea serverului
-const PORT = process.env.PORT || 5000; // 5000 este portul local pentru dezvoltare
-
+const PORT = process.env.PORT || 5000;
 const mongoUri = process.env.MONGO_URI;
 
 if (!mongoUri) {
@@ -58,20 +50,15 @@ if (!mongoUri) {
   );
 }
 
-console.log("MONGO_URI:", mongoUri);
-
-// Conectarea la MongoDB fără opțiuni depășite
 mongoose
   .connect(mongoUri)
   .then(() => {
     console.log("Connected to MongoDB");
-
-    // Pornirea serverului doar după ce conexiunea la MongoDB este reușită
     app.listen(PORT, () => {
       console.log(`Serverul rulează pe http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err.message);
-    process.exit(1); // Închide aplicația dacă nu se poate conecta la MongoDB
+    process.exit(1);
   });

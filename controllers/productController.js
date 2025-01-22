@@ -1,4 +1,7 @@
-const Product = require("../models/productModel"); // Importă modelul pentru produs
+const sharp = require("sharp");
+const path = require("path");
+const fs = require("fs-extra");
+const Product = require("../models/productModel");
 
 const getProducts = async (req, res) => {
   try {
@@ -11,54 +14,77 @@ const getProducts = async (req, res) => {
 };
 
 const addProduct = async (req, res) => {
-  console.log("addProduct route accessed");
-
-  // Loguri pentru a verifica datele trimise în body și fișierul
-  console.log("Request body:", req.body); // Log datele trimise
-  console.log("Uploaded file:", req.file); // Log fișierul încărcat
-
-  // Verificăm dacă toate câmpurile necesare sunt prezentate
-  const { name, price, description, category } = req.body;
-  if (!name || !price || !description || !category) {
-    console.log("Error: Missing required fields");
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  if (!req.file) {
-    console.log("No file uploaded");
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-  // Verificăm dacă prețul este valid (un număr)
-  const parsedPrice = parseFloat(price);
-  if (isNaN(parsedPrice)) {
-    console.log("Error: Invalid price value");
-    return res.status(400).json({ error: "Invalid price value" });
-  }
-
-  // Logăm informațiile despre fișier, dacă există
-  const image = req.file ? `/uploads/${req.file.filename}` : null;
-  console.log("Image path after processing:", image);
-
   try {
-    // Creează un obiect produs
+    console.log("Request body received:", req.body);
+    console.log("Uploaded file details:", req.file);
+
+    const { name, price, description, category, image } = req.body;
+
+    if (!name || !price || !description || !category) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    let imagePath;
+
+    // Check if a file was uploaded
+    if (req.file) {
+      imagePath = `/uploads/${req.file.filename}`;
+      console.log("File uploaded successfully:", imagePath);
+
+      const filePath = path.join(__dirname, "../uploads", req.file.filename);
+      const tempPath = path.join(
+        __dirname,
+        "../uploads",
+        `temp_${req.file.filename}`
+      );
+
+      // Resize the image and save it temporarily
+      await sharp(filePath).resize(800, 600).toFile(tempPath);
+
+      // Replace the original file with the resized file
+      await fs.rename(tempPath, filePath);
+
+      console.log("File resized and overwritten:", filePath);
+    } else if (image) {
+      const existingImagePath = path.join(
+        __dirname,
+        "../uploads",
+        path.basename(image)
+      );
+      console.log("Checking existence of image at path:", existingImagePath);
+
+      if (await fs.stat(existingImagePath)) {
+        imagePath = `/uploads/${path.basename(image)}`;
+        console.log("Using existing file:", imagePath);
+      } else {
+        console.log(
+          "Specified image does not exist in uploads directory:",
+          existingImagePath
+        );
+        return res
+          .status(400)
+          .json({ error: "Specified image does not exist" });
+      }
+    } else {
+      console.log("Error: No image uploaded or specified.");
+      return res.status(400).json({ error: "No image uploaded or specified" });
+    }
+
+    // Create the product and save it to the database
     const newProduct = new Product({
       name,
-      price: parsedPrice, // Asigurăm că prețul este un număr
+      price: parseFloat(price),
       description,
       category,
-      image, // Salvează calea fișierului încărcat, dacă există
+      image: imagePath,
     });
 
-    console.log("Saving product to database:", newProduct);
-
-    // Salvează produsul în baza de date
     const savedProduct = await newProduct.save();
-    console.log("Product saved:", savedProduct); // Log după ce produsul este salvat cu succes
+    console.log("Product saved successfully:", savedProduct);
 
     res.status(201).json(savedProduct);
   } catch (error) {
-    // Log eroare în cazul unei probleme la salvare
-    console.error("Error adding product:", error);
+    console.error("Error adding product:", error.message);
     res.status(500).json({ error: "Eroare la crearea produsului" });
   }
 };
@@ -117,14 +143,43 @@ const deleteProduct = async (req, res) => {
   }
 
   try {
-    const deletedProduct = await Product.findByIdAndDelete(id);
+    // Găsim produsul înainte de a-l șterge, pentru a obține detaliile imaginii
+    const productToDelete = await Product.findById(id);
 
-    if (!deletedProduct) {
+    if (!productToDelete) {
       console.log("Error: Product not found");
       return res.status(404).json({ error: "Product not found" });
     }
 
+    const imagePath = productToDelete.image;
+    console.log("imagePath:", imagePath);
+
+    // Ștergem produsul din baza de date
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
     console.log("Product deleted:", deletedProduct);
+
+    // Verificăm dacă imaginea este utilizată de alte produse
+    const isImageUsedElsewhere = await Product.exists({ image: imagePath });
+    console.log("Image used:", isImageUsedElsewhere);
+    if (!isImageUsedElsewhere && imagePath) {
+      // Convertim calea relativă într-o cale absolută
+      const absoluteImagePath = path.join(__dirname, "../", imagePath);
+
+      // Ștergem imaginea de pe disc
+      fs.unlink(absoluteImagePath, (err) => {
+        if (err) {
+          console.error("Error deleting image file:", err);
+        } else {
+          console.log("Image deleted successfully:", absoluteImagePath);
+        }
+      });
+    } else {
+      console.log(
+        "Image is still used by other products or no image associated."
+      );
+    }
+
     res.status(200).json({
       message: "Product deleted successfully",
       product: deletedProduct,

@@ -20,7 +20,7 @@ app.use(morgan("tiny"));
 app.use(
   "/uploads",
   (req, res, next) => {
-    console.log(`Request for file: ${req.path}`);
+    console.log(`Cerere fisier: ${req.path}`);
     next();
   },
   express.static(path.join(__dirname, "uploads"))
@@ -38,6 +38,10 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   console.error("Global error handler:", err.message);
   res.status(err.status || 500).json({ error: err.message || "Server error" });
+});
+
+app.get("/", (req, res) => {
+  res.send("Server is running");
 });
 
 // Conexiune la MongoDB și pornirea serverului

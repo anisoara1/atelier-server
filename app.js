@@ -41,11 +41,11 @@ app.use((err, req, res, next) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Server is running");
+  res.send("Bine ai venit pe serverul meu!");
 });
 
 // Conexiune la MongoDB și pornirea serverului
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; // Asigură-te că variabila PORT este definită
 const mongoUri = process.env.MONGO_URI;
 
 if (!mongoUri) {

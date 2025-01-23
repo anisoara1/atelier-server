@@ -5,16 +5,39 @@ const cors = require("cors");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const productRoutes = require("./routes/index"); // Correct import path
+const {
+  getProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+} = require("./controllers/productController"); // Controller functions
+const multer = require("multer");
+const fs = require("fs-extra");
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Global middleware
+// Middleware for parsing JSON
 app.use(express.json());
 app.use(cors());
 app.use(morgan("tiny"));
+
+// Configure Multer for file uploads
+const uploadPath = path.join(__dirname, "uploads"); // Ensure path is relative to the current directory
+fs.ensureDirSync(uploadPath);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Preserve original filename
+  },
+});
+
+const upload = multer({ storage });
 
 // Serve uploaded files
 app.use(
@@ -23,18 +46,28 @@ app.use(
     console.log(`File request: ${req.path}`);
     next();
   },
-  express.static(path.join(__dirname, "uploads"))
+  express.static(uploadPath)
 );
 
-// Main routes
-app.use("/", (req, res) => {
+// Main route
+app.get("/", (req, res) => {
   res.status(200).send("Welcome to the server!");
 });
-app.use("/products", productRoutes); // Prefix product routes with '/products'
+
+// Product routes
+const router = express.Router();
+
+router.get("/products", getProducts); // GET /products
+router.post("/products", upload.single("image"), addProduct); // POST /products
+router.put("/products/:id", upload.single("image"), updateProduct); // PUT /products/:id
+router.delete("/products/:id", deleteProduct); // DELETE /products/:id
+
+// Use the router for product routes
+app.use("/", router);
 
 // Handle 404 errors
 app.use((req, res, next) => {
-  next(createError(404));
+  next(createError(404, "Route not found"));
 });
 
 // Global error handler

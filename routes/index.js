@@ -11,7 +11,7 @@ const {
 
 const router = express.Router();
 
-// Configurare multer
+// Configure multer
 const uploadPath = path.join(__dirname, "../uploads");
 fs.ensureDirSync(uploadPath);
 
@@ -20,16 +20,16 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname); // Păstrează numele original al fișierului
+    cb(null, file.originalname); // Preserve original filename
   },
 });
 
 const upload = multer({ storage });
 
-// Rutele pentru produse
-router.get("/products", getProducts);
-router.post("/products", upload.single("image"), addProduct);
-router.put("/products/:id", upload.single("image"), updateProduct);
-router.delete("/products/:id", deleteProduct);
+// Product routes
+router.get("/", getProducts); // GET /products
+router.post("/", upload.single("image"), addProduct); // POST /products
+router.put("/:id", upload.single("image"), updateProduct); // PUT /products/:id
+router.delete("/:id", deleteProduct); // DELETE /products/:id
 
 module.exports = router;

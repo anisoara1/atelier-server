@@ -1,8 +1,8 @@
 const corsOptions = {
   origin: "*",
-  methods: "GET,POST",
+  methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
   optionsSuccessStatus: 204,
-  exposedHeaders: ["Access-Control-Allow-Private-Network"],
+  exposedHeaders: ["Content-Length", "Access-Control-Allow-Private-Network"], // Include relevant headers
 };
 
 module.exports = {

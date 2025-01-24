@@ -6,12 +6,7 @@ const Product = require("../models/productModel");
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
-    const fullPathProducts = products.map((product) => ({
-      ...product._doc,
-      image: `${req.protocol}://${req.get("host")}/uploads/${product.image}`,
-    }));
-    console.log("Products with image URLs:", fullPathProducts);
-    res.status(200).json(fullPathProducts);
+    res.status(200).json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ error: "Eroare la obținerea produselor" });

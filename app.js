@@ -58,7 +58,15 @@ app.get("/", (req, res) => {
 const router = express.Router();
 
 router.get("/products", getProducts); // GET /products
-router.post("/products", upload.single("image"), addProduct); // POST /products
+router.post(
+  "/products",
+  upload.single("image"),
+  (req, res, next) => {
+    console.log("Uploaded file:", req.file);
+    next();
+  },
+  addProduct
+);
 router.put("/products/:id", upload.single("image"), updateProduct); // PUT /products/:id
 router.delete("/products/:id", deleteProduct); // DELETE /products/:id
 

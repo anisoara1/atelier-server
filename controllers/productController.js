@@ -6,11 +6,6 @@ const Product = require("../models/productModel");
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
-
-    // Setează antetul pentru a dezactiva cache-ul
-    res.setHeader("Cache-Control", "no-store");
-
-    // Trimite răspunsul JSON
     res.status(200).json(products);
   } catch (error) {
     console.error("Error fetching products:", error);

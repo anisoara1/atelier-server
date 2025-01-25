@@ -99,15 +99,13 @@ mongoose
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {
-      console.log(Server running at http://localhost:${PORT});
+      console.log(`Server running at ${serverUrl}`);
     });
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err.message);
     process.exit(1);
-  });   
-
-
+  });
 
 // Log the current environment
 console.log(`Environment: ${process.env.NODE_ENV || "development"}`);

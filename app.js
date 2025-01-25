@@ -10,22 +10,20 @@ const {
   addProduct,
   updateProduct,
   deleteProduct,
-} = require("./controllers/productController"); // Controller functions
+} = require("./controllers/productController");
 const multer = require("multer");
 const fs = require("fs-extra");
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Middleware for parsing JSON
 app.use(express.json());
 app.use(cors());
 app.use(morgan("tiny"));
 
 // Configure Multer for file uploads
-const uploadPath = path.join(__dirname, "uploads"); // Ensure path is relative to the current directory
+const uploadPath = path.join(__dirname, "uploads");
 fs.ensureDirSync(uploadPath);
 
 const storage = multer.diskStorage({
@@ -33,21 +31,30 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname); // Preserve original filename
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const originalName = file.originalname.replace(/\s+/g, "-"); // Sanitize filename
+    cb(null, `${uniqueSuffix}-${originalName}`);
   },
 });
 
 const upload = multer({ storage });
 
-// Serve uploaded files
+// Serve uploaded files with cache headers
 app.use(
   "/uploads",
   (req, res, next) => {
-    console.log(`File request: ${req.path}`);
+    console.log(`[File Request] ${req.method} ${req.path}`);
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     next();
   },
   express.static(uploadPath)
 );
+
+app.use("/uploads", (req, res) => {
+  res.status(404).send("File not found.");
+});
 
 // Main route
 app.get("/", (req, res) => {
@@ -57,7 +64,7 @@ app.get("/", (req, res) => {
 // Product routes
 const router = express.Router();
 
-router.get("/products", getProducts); // GET /products
+router.get("/products", getProducts);
 router.post(
   "/products",
   upload.single("image"),
@@ -67,10 +74,9 @@ router.post(
   },
   addProduct
 );
-router.put("/products/:id", upload.single("image"), updateProduct); // PUT /products/:id
-router.delete("/products/:id", deleteProduct); // DELETE /products/:id
+router.put("/products/:id", upload.single("image"), updateProduct);
+router.delete("/products/:id", deleteProduct);
 
-// Use the router for product routes
 app.use("/", router);
 
 // Handle 404 errors

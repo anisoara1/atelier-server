@@ -95,17 +95,19 @@ if (!mongoUri) {
 }
 
 mongoose
-  .connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(mongoUri)
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {
-      console.log(`Server running at ${serverUrl}`);
+      console.log(Server running at http://localhost:${PORT});
     });
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err.message);
     process.exit(1);
-  });
+  });   
+
+
 
 // Log the current environment
 console.log(`Environment: ${process.env.NODE_ENV || "development"}`);

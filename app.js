@@ -10,20 +10,22 @@ const {
   addProduct,
   updateProduct,
   deleteProduct,
-} = require("./controllers/productController");
+} = require("./controllers/productController"); // Controller functions
 const multer = require("multer");
 const fs = require("fs-extra");
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
 
+// Middleware for parsing JSON
 app.use(express.json());
 app.use(cors());
 app.use(morgan("tiny"));
 
 // Configure Multer for file uploads
-const uploadPath = path.join(__dirname, "uploads");
+const uploadPath = path.join(__dirname, "uploads"); // Ensure path is relative to the current directory
 fs.ensureDirSync(uploadPath);
 
 const storage = multer.diskStorage({
@@ -31,30 +33,21 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const originalName = file.originalname.replace(/\s+/g, "-"); // Sanitize filename
-    cb(null, `${uniqueSuffix}-${originalName}`);
+    cb(null, file.originalname); // Preserve original filename
   },
 });
 
 const upload = multer({ storage });
 
-// Serve uploaded files with cache headers
+// Serve uploaded files
 app.use(
   "/uploads",
   (req, res, next) => {
-    console.log(`[File Request] ${req.method} ${req.path}`);
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
+    console.log(`File request: ${req.path}`);
     next();
   },
   express.static(uploadPath)
 );
-
-app.use("/uploads", (req, res) => {
-  res.status(404).send("File not found.");
-});
 
 // Main route
 app.get("/", (req, res) => {
@@ -93,6 +86,7 @@ app.use((err, req, res, next) => {
 // Connect to MongoDB and start the server
 const PORT = process.env.PORT || 5000;
 const mongoUri = process.env.MONGO_URI;
+const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
 
 if (!mongoUri) {
   throw new Error(
@@ -101,14 +95,17 @@ if (!mongoUri) {
 }
 
 mongoose
-  .connect(mongoUri)
+  .connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
+      console.log(`Server running at ${serverUrl}`);
     });
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err.message);
     process.exit(1);
   });
+
+// Log the current environment
+console.log(`Environment: ${process.env.NODE_ENV || "development"}`);

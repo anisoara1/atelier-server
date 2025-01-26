@@ -84,8 +84,8 @@ app.use((err, req, res, next) => {
 });
 
 // Connect to MongoDB and start the server
-const PORT = process.env.PORT || 5000;
 const mongoUri = process.env.MONGO_URI;
+const PORT = process.env.PORT || 5000;
 const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
 
 if (!mongoUri) {
